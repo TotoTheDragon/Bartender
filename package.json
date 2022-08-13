@@ -1,0 +1,40 @@
+{
+    "name": "bartender",
+    "version": "1.0.0",
+    "description": "Product database API",
+    "main": "index.js",
+    "scripts": {
+        "generate-api": "widdershins --language_tabs 'javascript:Javascript' -t atom-one-dark --summary openapi.yaml -o api.md",
+        "linter:prettier": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
+        "linter:eslint": "eslint --ext .js,.ts .",
+        "lint": "npm-run-all linter:**"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/TotoTheDragon/Bartender.git"
+    },
+    "keywords": [
+        "store",
+        "api",
+        "product",
+        "database"
+    ],
+    "author": "TotoTheDragon",
+    "license": "GPL-3.0",
+    "bugs": {
+        "url": "https://github.com/TotoTheDragon/Bartender/issues"
+    },
+    "homepage": "https://github.com/TotoTheDragon/Bartender#readme",
+    "devDependencies": {
+        "@types/node": "^18.7.2",
+        "@typescript-eslint/eslint-plugin": "^5.33.0",
+        "@typescript-eslint/parser": "^5.33.0",
+        "eslint": "^8.21.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-plugin-import": "^2.26.0",
+        "npm-run-all": "^4.1.5",
+        "prettier": "^2.7.1",
+        "typescript": "^4.7.4",
+        "widdershins": "^4.0.1"
+    }
+}
