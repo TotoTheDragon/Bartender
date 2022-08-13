@@ -1,0 +1,608 @@
+openapi: 3.1.0
+info:
+  version: 1.0.0
+  title: bartender
+  description: API that keeps track of products
+  license:
+    name: GNU General Public License v3.0 or later
+    url: 'https://spdx.org/licenses/GPL-3.0-or-later.html'
+  contact:
+    name: Thomas van de Weerd
+    email: t.d.vandeweerd@student.utwente.nl
+  summary: Product database
+servers:
+  - url: '{baseUrl}'
+tags:
+  - name: Health
+    description: API Health
+  - name: Product
+    description: Handles products
+paths:
+  '/product/{gtin}':
+    get:
+      summary: Find product by GTIN
+      description: 'Checks if the GTIN exists in the database, returns the matching product if it does, otherwise returns a 404 Not Found'
+      operationId: getProduct
+      tags:
+        - Product
+      parameters:
+        - name: gtin
+          in: path
+          description: GTIN of the product we want to request
+          required: true
+          schema:
+            type: string
+            example: '8716700027200'
+      responses:
+        '200':
+          description: Found product by GTIN
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                example:
+                  value:
+                    gtin: '8716700027200'
+                    name: Grolsch Pilsener krat
+                    description: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+                    category: beer
+                    images:
+                      - height: 800
+                        width: 800
+                        url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+                    brand: Grolsch
+                    quantity:
+                      value: 300
+                      unit: ml
+                      amount: 24
+                      total: 7200
+                    attributes:
+                      alcohol_percentage: 5
+                      contains_alcohol: true
+                      '': string
+        '404':
+          description: Could not find product by GTIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                example:
+                  value:
+                    code: 404
+                    message: Was not able to find product for GTIN 8716700027200
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                example:
+                  value:
+                    code: 500
+                    message: Something went wrong
+    patch:
+      summary: Update product
+      description: Change some data about a product
+      operationId: updateProduct
+      tags:
+        - Product
+      parameters:
+        - name: gtin
+          in: path
+          description: GTIN of the product we want to request
+          required: true
+          schema:
+            type: string
+            example: '8716700027200'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                example:
+                  value:
+                    gtin: '8716700027200'
+                    name: Grolsch Pilsener krat
+                    description: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+                    category: beer
+                    images:
+                      - height: 800
+                        width: 800
+                        url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+                    brand: Grolsch
+                    quantity:
+                      value: 300
+                      unit: ml
+                      amount: 24
+                      total: 7200
+                    attributes:
+                      alcohol_percentage: 5
+                      contains_alcohol: true
+                      '': string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                example:
+                  value:
+                    code: 404
+                    message: Could not find product with GTIN 8716700027200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductProperties'
+    delete:
+      summary: Delete product
+      tags:
+        - Product
+      parameters:
+        - name: gtin
+          in: path
+          description: GTIN of the product we want to request
+          required: true
+          schema:
+            type: string
+            example: '8716700027200'
+      operationId: deleteProduct
+      responses:
+        '204':
+          description: No Content
+      description: Remove a product from the database
+  /product/search:
+    post:
+      summary: Search for product
+      tags:
+        - Product
+      operationId: searchProduct
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+              examples: {}
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                example:
+                  value:
+                    code: 404
+                    message: Was not able to find a matching product
+      description: 'Tries to find the product matching all the data you give. Will start by checking GTIN, then validating the rest of the data that should not change like quantity. In case it can not find it by GTIN, it will try to find a very close match by using the name and quantity. This match needs to be above a certain treshold for it to be returned.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductProperties'
+        description: The partial data you have about the item you want to find.
+  /product:
+    get:
+      summary: Get all products
+      description: Get all products stored in the database
+      tags:
+        - Product
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: '#/components/schemas/Product'
+              examples:
+                example:
+                  value:
+                    - gtin: '8716700027200'
+                      name: Grolsch Pilsener krat
+                      description: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+                      category: beer
+                      images:
+                        - height: 800
+                          width: 800
+                          url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+                      brand: Grolsch
+                      quantity:
+                        value: 300
+                        unit: ml
+                        amount: 24
+                        total: 7200
+                      attributes:
+                        alcohol_percentage: 5
+                        contains_alcohol: true
+                        '': string
+      operationId: getProducts
+    post:
+      summary: Create product
+      description: Add a product to the database
+      operationId: createProduct
+      tags:
+        - Product
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+              examples:
+                example:
+                  value:
+                    gtin: '8716700027200'
+                    name: Grolsch Pilsener krat
+                    description: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+                    category: beer
+                    images:
+                      - height: 800
+                        width: 800
+                        url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+                    brand: Grolsch
+                    quantity:
+                      value: 300
+                      unit: ml
+                      amount: 24
+                      total: 7200
+                    attributes:
+                      alcohol_percentage: 5
+                      contains_alcohol: true
+                      '': string
+        '409':
+          description: Already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                example:
+                  value:
+                    code: 409
+                    message: Resource already exists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+  /health:
+    get:
+      summary: Get API Health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              examples:
+                example:
+                  value:
+                    healthy: true
+                    checks:
+                      memory:
+                        status: up
+                        used: 300
+                        max: 512
+                      response-time:
+                        '50': 7
+                        '90': 12
+                        '95': 14
+                        average: 8
+                    dependencies:
+                      database:
+                        name: Postgre
+                        healthy: true
+                        latency: 3
+                      external-api:
+                        name: Some API
+                        healthy: true
+                        latency: 20
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              examples:
+                example:
+                  value:
+                    healthy: true
+                    checks:
+                      memory:
+                        status: up
+                        used: 300
+                        max: 512
+                      response-time:
+                        '50': 7
+                        '90': 12
+                        '95': 14
+                        average: 8
+                    dependencies:
+                      database:
+                        name: Postgre
+                        healthy: true
+                        latency: 3
+                      external-api:
+                        name: Some API
+                        healthy: true
+                        latency: 20
+      operationId: getHealth
+      description: Get whether or not the API is currently healthy
+  /health/ready:
+    get:
+      summary: Get API readiness
+      tags:
+        - Health
+      responses:
+        '200':
+          description: OK
+      operationId: getIsServerReady
+      description: A basic ping-pong to check if the server is able to receive requests and respond to them
+
+components:
+  schemas:
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductProperties'
+        - $ref: '#/components/schemas/ProductRequiredProperties'
+      examples:
+        - gtin: '8716700027200'
+          name: Grolsch Pilsener krat
+          description: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+          category: beer
+          images:
+            - height: 800
+              width: 800
+              url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+          brand: Grolsch
+          quantity:
+            value: 300
+            unit: ml
+            amount: 24
+            total: 7200
+          attributes:
+            alcohol_percentage: 5
+            contains_alcohol: true
+            '': string
+    ProductProperties:
+      type: object
+      examples:
+        - gtin: '8716700027200'
+          name: Grolsch Pilsener krat
+          description: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+          category: beer
+          images:
+            - height: 800
+              width: 800
+              url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+          brand: Grolsch
+          quantity:
+            value: 300
+            unit: ml
+            amount: 24
+            total: 7200
+          attributes:
+            alcohol_percentage: 5
+            contains_alcohol: true
+            '': string
+      properties:
+        gtin:
+          type: string
+          example: '8716700027200'
+        name:
+          type: string
+          example: Grolsch Pilsener krat
+        description:
+          type: string
+          example: Grolsch Premium pilsner is vol van smaak met een aangename bitterheid en een rijke afdronk. Het wordt gebrouwen met twee soorten hop. Dit geeft Grolsch Premium pilsner haar unieke karakter.
+        category:
+          type: string
+          example: beer
+        brand:
+          type: string
+          example: Grolsch
+        images:
+          type: array
+          example:
+            - height: 800
+              width: 800
+              url: 'https://static.ah.nl/dam/product/AHI_43545239383734363237?revLabel=1&rendition=800x800_JPG_Q90&fileType=binary'
+          items:
+            $ref: '#/components/schemas/Image'
+        quantity:
+          $ref: '#/components/schemas/ProductQuantity'
+        attributes:
+          $ref: '#/components/schemas/ProductAttributes'
+    ProductRequiredProperties:
+      type: object
+      required:
+        - gtin
+        - name
+        - quantity
+      examples: []
+    ProductAttributes:
+      type: object
+      additionalProperties: true
+      examples:
+        - alcohol_percentage: 5
+          contains_alcohol: true
+          '': string
+        - contains_gluten: false
+      properties:
+        '':
+          type: string
+      description: ''
+    ProductQuantity:
+      type: object
+      examples:
+        - value: 300
+          unit: ml
+          amount: 24
+          total: 7200
+      properties:
+        value:
+          type: integer
+          format: int64
+        unit:
+          type: string
+          examples:
+            - mL
+            - kg
+            - L
+            - g
+        amount:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+      required:
+        - value
+        - unit
+        - amount
+        - total
+    Image:
+      type: object
+      properties:
+        height:
+          type: integer
+          format: int32
+          example: 300
+        width:
+          type: integer
+          format: int32
+          example: 200
+        url:
+          type: string
+          example: 'https://picsum.photos/200/300'
+      required:
+        - height
+        - width
+        - url
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          example: 500
+        message:
+          type: string
+          example: Something went wrong
+    Health:
+      type: object
+      x-examples:
+        example-1:
+          healthy: true
+          checks:
+            memory:
+              status: good
+              used: 300
+              max: 512
+            response-time:
+              '50': 7
+              '90': 12
+              '95': 14
+              average: 8
+          dependencies:
+            database:
+              healthy: true
+              latency: 3
+      examples:
+        - healthy: true
+          checks:
+            memory:
+              status: up
+              used: 300
+              max: 512
+            response-time:
+              '50': 7
+              '90': 12
+              '95': 14
+              average: 8
+          dependencies:
+            database:
+              name: Postgre
+              healthy: true
+              latency: 3
+      description: The current health of the api
+      title: ''
+      properties:
+        healthy:
+          type: boolean
+        checks:
+          type: object
+          properties:
+            memory:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - up
+                    - partial
+                    - down
+                used:
+                  type: integer
+                max:
+                  type: integer
+            response-time:
+              type: object
+              properties:
+                '50':
+                  type: integer
+                '90':
+                  type: integer
+                '95':
+                  type: integer
+                average:
+                  type: integer
+        dependencies:
+          type: object
+          properties:
+            '':
+              $ref: '#/components/schemas/HealthDependency'
+    HealthDependency:
+      title: HealthDependency
+      x-stoplight:
+        id: zt54ur4kbkpi8
+      type: object
+      properties:
+        name:
+          type: string
+        latency:
+          type: integer
+        healthy:
+          type: boolean
+      required:
+        - name
+        - latency
+        - healthy
+  securitySchemes:
+    BearerToken:
+      type: http
+      scheme: bearer
+security:
+  - BearerToken: []
