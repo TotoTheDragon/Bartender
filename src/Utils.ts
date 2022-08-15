@@ -33,4 +33,8 @@ export default class Utils {
         const ts = process.hrtime();
         return ts[0] * 1e3 + ts[1] / 1e6;
     }
+
+    static average(nums: number[]): number {
+        return nums.reduce((a, b) => a + b, 0) / nums.length;
+    }
 }
