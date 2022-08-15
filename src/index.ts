@@ -49,7 +49,6 @@ server.addHook('onRequest', (_request, reply, next) => {
 server.addHook('onResponse', (_request, reply, next) => {
     reply.sendTime = Utils.now();
     reply.responseTime = reply.sendTime - reply.startTime;
-    logger.info(reply.responseTime);
     responseTimeChecker.addResponseTime(reply.responseTime);
     next();
 });
