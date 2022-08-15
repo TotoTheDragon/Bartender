@@ -1,15 +1,19 @@
 import { Client, ClientConfig } from 'pg';
+import { Logger } from 'winston';
 import HealthDependency from '../health/HealthDependency';
 
 export default class DatabaseManager extends HealthDependency {
-    client: Client;
+    private logger: Logger;
+
+    private client: Client;
 
     latency: number;
 
     connected: boolean;
 
-    constructor(config?: ClientConfig) {
+    constructor(logger: Logger, config?: ClientConfig) {
         super();
+        this.logger = logger;
         this.client = new Client(config);
         this.latency = -1;
         this.connected = false;
@@ -24,8 +28,7 @@ export default class DatabaseManager extends HealthDependency {
     public async connect(): Promise<void> {
         return this.client.connect((err) => {
             if (err) {
-                console.log(err);
-                console.log('Was not able to connect to database');
+                this.logger.error('Could not connect to database', { err });
             }
             this.connected = true;
         });
