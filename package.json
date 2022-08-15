@@ -38,6 +38,8 @@
         "widdershins": "^4.0.1"
     },
     "dependencies": {
-        "fastify": "^4.4.0"
+        "@types/pg": "^8.6.5",
+        "fastify": "^4.4.0",
+        "pg": "^8.7.3"
     }
 }
