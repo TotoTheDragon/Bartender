@@ -34,7 +34,9 @@ export default class Utils {
         return ts[0] * 1e3 + ts[1] / 1e6;
     }
 
-    static average(nums: number[]): number {
-        return nums.reduce((a, b) => a + b, 0) / nums.length;
+    static average(nums: number[]): number | undefined {
+        return nums.length
+            ? nums.reduce((a, b) => a + b, 0) / nums.length
+            : undefined;
     }
 }
