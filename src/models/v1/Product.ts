@@ -9,5 +9,5 @@ export interface Product {
     brand?: string;
     images?: BartenderImage[];
     quantity?: ProductQuantity;
-    attributes?: {[key: string]: string | number | boolean}
+    attributes?: { [key: string]: string | number | boolean };
 }

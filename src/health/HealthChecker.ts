@@ -1,7 +1,7 @@
 export default abstract class HealthChecker {
     name: string;
 
-    lastCheck: {healthy: boolean} & object | null;
+    lastCheck: ({ healthy: boolean } & object) | null;
 
     constructor(name: string) {
         this.name = name;
