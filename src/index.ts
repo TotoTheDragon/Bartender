@@ -2,6 +2,7 @@ import { config } from 'dotenv';
 import fastify from 'fastify';
 import winston from 'winston';
 import DatabaseManager from './database/DatabaseManager';
+import MemoryChecker from './health/checkers/MemoryChecker';
 import HealthManager from './health/HealthManager';
 import BartenderRouter from './router';
 
@@ -38,6 +39,8 @@ server.register(BartenderRouter, { prefix: '/api' });
 
 // Set up health manager
 healthManager.registerDependency('Postgres Database', databaseManager);
+
+healthManager.registerChecker(new MemoryChecker('Memory'));
 
 // Set up connections
 (async () => {
