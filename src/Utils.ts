@@ -28,4 +28,9 @@ export default class Utils {
         });
         return obj;
     }
+
+    static now() {
+        const ts = process.hrtime();
+        return ts[0] * 1e3 + ts[1] / 1e6;
+    }
 }
