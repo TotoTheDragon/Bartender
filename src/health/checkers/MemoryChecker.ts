@@ -5,6 +5,7 @@ export default class MemoryChecker extends HealthChecker {
     constructor() {
         super('memory');
     }
+
     async doHealthCheck(): Promise<void> {
         const usage = process.memoryUsage();
         const heapPercentage = (100 * usage.heapUsed) / usage.heapTotal;
