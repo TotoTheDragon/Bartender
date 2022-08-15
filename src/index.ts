@@ -26,8 +26,8 @@ process.on('uncaughtException', (err) => {
     Initialize all required things
 */
 
-const healthManager = new HealthManager();
-const databaseManager = new DatabaseManager({});
+const healthManager = new HealthManager(logger);
+const databaseManager = new DatabaseManager(logger, {});
 const server = fastify();
 
 // Set up fastify instance
