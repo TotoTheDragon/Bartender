@@ -13,6 +13,7 @@ module.exports = {
     rules: {
         indent: ['error', 4],
         'import/extensions': ['error', 'never'],
+        'no-use-before-define': 'off',
     },
     settings: {
         'import/resolver': {
