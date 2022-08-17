@@ -22,10 +22,6 @@ if (process.env.NODE_ENV !== 'production') {
         }),
     );
 }
-
-process.on('uncaughtException', (err) => {
-    logger.error('Uncaught error occurred', { err });
-});
 /*
     Initialize all required things
 */
