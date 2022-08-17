@@ -54,6 +54,7 @@ export default class DatabaseManager extends HealthDependency {
                 this.latency = -1;
             }
         }, 10000);
+        this.ping();
     }
 
     public async query<T>(query: string, args?: any[]): Promise<T[]> {

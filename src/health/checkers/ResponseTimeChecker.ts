@@ -27,7 +27,7 @@ export default class ResponseTimeChecker extends HealthChecker {
             this.history,
         ) as number[];
         this.lastCheck = {
-            healthy: percentiles[0] < 30,
+            healthy: percentiles[0] < 30 || percentiles[0] === undefined,
             average: Utils.average(this.history),
             '50th': percentiles[0],
             '90th': percentiles[1],
