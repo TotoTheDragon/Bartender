@@ -17,7 +17,7 @@ function hashQuantity(quantity: ProductQuantity): string {
     return quantity.value + quantity.unit + quantity.amount;
 }
 
-export async function findQuantity(
+export async function getQuantity(
     database: DatabaseManager,
     quantity: ProductQuantity,
 ): Promise<DatabaseQuantity> {
@@ -39,26 +39,34 @@ export async function findQuantity(
     }
 
     // Check if the quantity is already in the database
-    const foundResults = await database.query(
-        'SELECT id FROM quantity WHERE quantity_value = ?, quantity_amount = ?, quantity_unit = ?;',
-        [normalizedQuantity.value, normalizedQuantity.amount, normalizedQuantity.unit],
+    const foundResults: { id: number }[] = await database.query(
+        'SELECT id FROM quantity WHERE quantity_value = $1 AND quantity_amount = $2 AND quantity_unit = $3;',
+        [
+            normalizedQuantity.value,
+            normalizedQuantity.amount,
+            normalizedQuantity.unit,
+        ],
     );
     // The quantity already exists
     if (foundResults.length > 0) {
         quantityCache.set(hashedQuantity, {
-            id: foundResults[0] as number,
+            id: foundResults[0].id,
             ...normalizedQuantity,
         });
     } else {
         // Create a new quantity
-        const createdResults = await database.query(
-            'INSERT INTO quantity (quantity_value, quantity_amount, quantity_unit) VALUES (?, ?, ?) RETURNING id;',
-            [normalizedQuantity.value, normalizedQuantity.amount, normalizedQuantity.unit],
+        const createdResults: { id: number }[] = await database.query(
+            'INSERT INTO quantity (quantity_value, quantity_amount, quantity_unit) VALUES ($1, $2, $3) RETURNING id;',
+            [
+                normalizedQuantity.value,
+                normalizedQuantity.amount,
+                normalizedQuantity.unit,
+            ],
         );
 
         if (createdResults.length > 0) {
             quantityCache.set(hashedQuantity, {
-                id: createdResults[0] as number,
+                id: createdResults[0].id as number,
                 ...normalizedQuantity,
             });
         }
