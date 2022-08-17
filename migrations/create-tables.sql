@@ -6,6 +6,8 @@ CREATE TABLE quantity (
 	PRIMARY KEY (quantity_value, quantity_amount, quantity_unit)
 );
 
+CREATE UNIQUE INDEX ON quantity (id);
+
 CREATE TABLE product (
 	gtin char(14) PRIMARY KEY NOT NULL,
 	name varchar,
@@ -33,5 +35,4 @@ CREATE TABLE product_attributes (
 	boolean_value boolean
 );
 
-CREATE UNIQUE INDEX ON product_attributes (attribute_name);
-
+CREATE UNIQUE INDEX ON product_attributes (name);
