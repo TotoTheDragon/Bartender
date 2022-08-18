@@ -1,7 +1,7 @@
 import { isGTIN, isValid } from 'gtin';
 import DatabaseManager from '../../database/DatabaseManager';
 import { BartenderImage } from './BartenderImage';
-import { getQuantity, ProductQuantity } from './ProductQuantity';
+import { getQuantity, getQuantityById, ProductQuantity } from './ProductQuantity';
 
 export interface Product {
     gtin?: string;
@@ -25,6 +25,70 @@ interface RequiredProduct {
     // Optional
     images?: BartenderImage[];
     attributes?: { [key: string]: string | number | boolean };
+}
+
+interface DatabaseProduct {
+    gtin: string;
+    name: string;
+    description: string;
+    category: string;
+    brand: string;
+    images: BartenderImage[];
+    quantity_id: number;
+}
+
+interface DatabaseProductAttribute {
+    name: string;
+    type: 'text' | 'integer' | 'float' | 'boolean';
+    text_value: string;
+    integer_value: number;
+    float_value: number;
+    boolean_value: boolean;
+}
+
+function getAttributeValue(attribute: DatabaseProductAttribute): string | number | boolean {
+    switch (attribute.type) {
+    case 'text':
+        return attribute.text_value;
+    case 'integer':
+        return attribute.integer_value;
+    case 'float':
+        return attribute.float_value;
+    case 'boolean':
+        return attribute.boolean_value;
+    default:
+        throw new Error('Unexpected attribute type');
+    }
+}
+
+export async function getProduct(
+    database: DatabaseManager,
+    gtin: string,
+): Promise<Product | undefined> {
+    const databaseProduct: DatabaseProduct = (
+        await database.query<DatabaseProduct>('SELECT * FROM product WHERE gtin = $1', [gtin])
+    )[0];
+
+    if (databaseProduct === undefined) {
+        return undefined;
+    }
+
+    const attributes: DatabaseProductAttribute[] = await database.query<DatabaseProductAttribute>(
+        'SELECT * FROM product_attributes WHERE gtin = $1;',
+        [gtin],
+    );
+
+    const product: Product = { ...databaseProduct };
+
+    product.quantity = await getQuantityById(database, databaseProduct.quantity_id);
+
+    product.attributes = {};
+
+    attributes.forEach((attribute) => {
+        product.attributes![attribute.name] = getAttributeValue(attribute);
+    });
+
+    return product;
 }
 
 export async function createProduct(
@@ -53,18 +117,10 @@ export async function createProduct(
 }
 
 export function checkRequiredCreateFields(product: RequiredProduct) {
-    if (
-        !(typeof product.gtin === 'string') ||
-        !isGTIN(product.gtin) ||
-        !isValid(product.gtin)
-    ) {
+    if (!(typeof product.gtin === 'string') || !isGTIN(product.gtin) || !isValid(product.gtin)) {
         throw new Error('gtin is invalid');
     }
-    if (
-        product.name === undefined ||
-        product.name === null ||
-        product.name === ''
-    ) {
+    if (product.name === undefined || product.name === null || product.name === '') {
         throw new Error('name is invalid');
     }
     if (
@@ -74,18 +130,10 @@ export function checkRequiredCreateFields(product: RequiredProduct) {
     ) {
         throw new Error('description is invalid');
     }
-    if (
-        product.category === undefined ||
-        product.category === null ||
-        product.category === ''
-    ) {
+    if (product.category === undefined || product.category === null || product.category === '') {
         throw new Error('category is invalid');
     }
-    if (
-        product.brand === undefined ||
-        product.brand === null ||
-        product.brand === ''
-    ) {
+    if (product.brand === undefined || product.brand === null || product.brand === '') {
         throw new Error('brand is invalid');
     }
 
