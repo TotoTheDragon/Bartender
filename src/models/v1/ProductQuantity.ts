@@ -3,6 +3,7 @@ import DatabaseManager from '../../database/DatabaseManager';
 import Utils from '../../Utils';
 
 const quantityCache: Map<string, DatabaseQuantity> = new Map();
+const quantityIdCache: Map<number, DatabaseQuantity> = new Map();
 
 export interface ProductQuantity {
     value: number;
@@ -15,6 +16,13 @@ export type DatabaseQuantity = ProductQuantity & { id: number };
 
 function hashQuantity(quantity: ProductQuantity): string {
     return quantity.value + quantity.unit + quantity.amount;
+}
+
+function addToCache(quantity: DatabaseQuantity): DatabaseQuantity {
+    const hashedQuantity: string = hashQuantity(quantity);
+    quantityCache.set(hashedQuantity, quantity);
+    quantityIdCache.set(quantity.id, quantity);
+    return quantity;
 }
 
 export async function getQuantity(
@@ -41,35 +49,28 @@ export async function getQuantity(
     // Check if the quantity is already in the database
     const foundResults: { id: number }[] = await database.query(
         'SELECT id FROM quantity WHERE quantity_value = $1 AND quantity_amount = $2 AND quantity_unit = $3;',
-        [
-            normalizedQuantity.value,
-            normalizedQuantity.amount,
-            normalizedQuantity.unit,
-        ],
+        [normalizedQuantity.value, normalizedQuantity.amount, normalizedQuantity.unit],
     );
     // The quantity already exists
     if (foundResults.length > 0) {
-        quantityCache.set(hashedQuantity, {
-            id: foundResults[0].id,
+        const { id } = foundResults[0];
+        return addToCache({
+            id,
             ...normalizedQuantity,
         });
-    } else {
-        // Create a new quantity
-        const createdResults: { id: number }[] = await database.query(
-            'INSERT INTO quantity (quantity_value, quantity_amount, quantity_unit) VALUES ($1, $2, $3) RETURNING id;',
-            [
-                normalizedQuantity.value,
-                normalizedQuantity.amount,
-                normalizedQuantity.unit,
-            ],
-        );
+    }
+    // Create a new quantity
+    const createdResults: { id: number }[] = await database.query(
+        'INSERT INTO quantity (quantity_value, quantity_amount, quantity_unit) VALUES ($1, $2, $3) RETURNING id;',
+        [normalizedQuantity.value, normalizedQuantity.amount, normalizedQuantity.unit],
+    );
 
-        if (createdResults.length > 0) {
-            quantityCache.set(hashedQuantity, {
-                id: createdResults[0].id as number,
-                ...normalizedQuantity,
-            });
-        }
+    if (createdResults.length > 0) {
+        const { id } = createdResults[0];
+        return addToCache({
+            id,
+            ...normalizedQuantity,
+        });
     }
 
     if (quantityCache.has(hashedQuantity)) {
@@ -77,4 +78,31 @@ export async function getQuantity(
     }
 
     throw new Error('Was not able to find or create quantity');
+}
+export async function getQuantityById(
+    database: DatabaseManager,
+    id: number,
+): Promise<DatabaseQuantity> {
+    if (quantityIdCache.has(id)) {
+        return quantityIdCache.get(id) as DatabaseQuantity;
+    }
+
+    const result = await database.query<{
+        quantity_value: number;
+        quantity_amount: number;
+        quantity_unit: Unit;
+    }>('SELECT * FROM quantity WHERE id = $1;', [id]);
+
+    if (result.length > 0) {
+        const dbQuantity = result[0];
+        return addToCache({
+            id,
+            value: dbQuantity.quantity_value,
+            amount: dbQuantity.quantity_amount,
+            unit: dbQuantity.quantity_unit,
+            total: dbQuantity.quantity_value * dbQuantity.quantity_amount,
+        });
+    }
+
+    throw new Error('Tried getting non-existent quantity by id');
 }
