@@ -1,6 +1,8 @@
 /* eslint-disable no-param-reassign */
+import Ajv from 'ajv';
 import { config } from 'dotenv';
 import fastify from 'fastify';
+import { isValid as isValidGTIN } from 'gtin';
 import winston from 'winston';
 import DatabaseManager from './database/DatabaseManager';
 import MemoryChecker from './health/checkers/MemoryChecker';
@@ -36,10 +38,17 @@ const databaseManager = new DatabaseManager(logger, {});
 const memoryChecker = new MemoryChecker();
 const responseTimeChecker = new ResponseTimeChecker();
 
+const ajv = new Ajv();
+ajv.addFormat('gtin', {
+    type: 'string',
+    validate: isValidGTIN,
+});
+
 const server = fastify();
 
 // Set up fastify instance
 server.decorate('logger', logger);
+server.decorate('ajv', ajv);
 server.decorate('health-manager', healthManager);
 server.decorate('db-manager', databaseManager);
 server.register(BartenderRouter, { prefix: '/api' });

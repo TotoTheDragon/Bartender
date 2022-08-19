@@ -1,9 +1,11 @@
-import { isGTIN, isValid } from 'gtin';
+import { Schema } from 'ajv';
 import DatabaseManager from '../../database/DatabaseManager';
 import Transformer from '../../transform/transformer';
 import { Attribute } from './Attribute';
 import { BartenderImage } from './BartenderImage';
-import { getQuantity, getQuantityById, ProductQuantity } from './ProductQuantity';
+import {
+    getQuantity, getQuantityById, ProductQuantity, QUANTITY_SCHEMA,
+} from './ProductQuantity';
 
 export interface Product {
     gtin?: string;
@@ -16,7 +18,7 @@ export interface Product {
     attributes?: { [key: string]: Attribute };
 }
 
-interface RequiredProduct {
+export interface RequiredProductData {
     // Required
     gtin: string;
     name: string;
@@ -28,6 +30,19 @@ interface RequiredProduct {
     images: BartenderImage[];
     attributes: { [key: string]: Attribute };
 }
+
+export const PRODUCT_SCHEMA: Schema = {
+    type: 'object',
+    properties: {
+        gtin: { type: 'string', format: 'gtin' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        category: { type: 'string' },
+        brand: { type: 'string' },
+        quantity: QUANTITY_SCHEMA,
+    },
+    required: ['gtin'],
+};
 
 export async function getProduct(
     database: DatabaseManager,
@@ -72,7 +87,7 @@ export async function getProduct(
 
 export async function createProduct(
     database: DatabaseManager,
-    product: RequiredProduct,
+    product: RequiredProductData,
 ): Promise<Product> {
     const quantityId = (await getQuantity(database, product.quantity)).id;
     const result = await database.query(
@@ -93,58 +108,4 @@ export async function createProduct(
     }
 
     return { ...product, images: product.images ?? [] };
-}
-
-export function checkRequiredCreateFields(product: RequiredProduct) {
-    if (!(typeof product.gtin === 'string') || !isGTIN(product.gtin) || !isValid(product.gtin)) {
-        throw new Error('gtin is invalid');
-    }
-    if (product.name === undefined || product.name === null || product.name === '') {
-        throw new Error('name is invalid');
-    }
-    if (
-        product.description === undefined ||
-        product.description === null ||
-        product.description === ''
-    ) {
-        throw new Error('description is invalid');
-    }
-    if (product.category === undefined || product.category === null || product.category === '') {
-        throw new Error('category is invalid');
-    }
-    if (product.brand === undefined || product.brand === null || product.brand === '') {
-        throw new Error('brand is invalid');
-    }
-
-    if (
-        product.quantity === undefined ||
-        product.quantity === null ||
-        !(typeof product.quantity === 'object')
-    ) {
-        throw new Error('quantity is invalid');
-    }
-
-    if (
-        product.quantity?.value === undefined ||
-        product.quantity?.value === null ||
-        product.quantity?.value <= 0
-    ) {
-        throw new Error('quantity.value is invalid');
-    }
-
-    if (
-        product.quantity?.amount === undefined ||
-        product.quantity?.amount === null ||
-        product.quantity?.amount <= 0
-    ) {
-        throw new Error('quantity.amount is invalid');
-    }
-
-    if (
-        product.quantity?.unit === undefined ||
-        product.quantity?.unit === null ||
-        (product.quantity?.unit as unknown) === ''
-    ) {
-        throw new Error('quantity.unit is invalid');
-    }
 }

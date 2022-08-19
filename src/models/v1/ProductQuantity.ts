@@ -1,4 +1,5 @@
-import { Unit } from 'convert-units';
+import { Schema } from 'ajv';
+import convert, { Unit } from 'convert-units';
 import DatabaseManager from '../../database/DatabaseManager';
 import Transformer from '../../transform/transformer';
 
@@ -11,6 +12,16 @@ export interface ProductQuantity {
     amount: number;
     total: number;
 }
+
+export const QUANTITY_SCHEMA: Schema = {
+    type: 'object',
+    properties: {
+        value: { type: 'number' },
+        amount: { type: 'number' },
+        unit: { enum: convert().possibilities() },
+    },
+    required: ['value', 'amount', 'unit'],
+};
 
 export type CachedQuantity = ProductQuantity & { id: number };
 
