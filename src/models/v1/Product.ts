@@ -1,5 +1,7 @@
 import { isGTIN, isValid } from 'gtin';
 import DatabaseManager from '../../database/DatabaseManager';
+import Transformer from '../../transform/transformer';
+import { Attribute } from './Attribute';
 import { BartenderImage } from './BartenderImage';
 import { getQuantity, getQuantityById, ProductQuantity } from './ProductQuantity';
 
@@ -11,7 +13,7 @@ export interface Product {
     brand?: string;
     images?: BartenderImage[];
     quantity?: ProductQuantity;
-    attributes?: { [key: string]: string | number | boolean };
+    attributes?: { [key: string]: Attribute };
 }
 
 interface RequiredProduct {
@@ -23,70 +25,47 @@ interface RequiredProduct {
     brand: string;
     quantity: ProductQuantity;
     // Optional
-    images?: BartenderImage[];
-    attributes?: { [key: string]: string | number | boolean };
-}
-
-interface DatabaseProduct {
-    gtin: string;
-    name: string;
-    description: string;
-    category: string;
-    brand: string;
     images: BartenderImage[];
-    quantity_id: number;
-}
-
-interface DatabaseProductAttribute {
-    name: string;
-    type: 'text' | 'integer' | 'float' | 'boolean';
-    text_value: string;
-    integer_value: number;
-    float_value: number;
-    boolean_value: boolean;
-}
-
-function getAttributeValue(attribute: DatabaseProductAttribute): string | number | boolean {
-    switch (attribute.type) {
-    case 'text':
-        return attribute.text_value;
-    case 'integer':
-        return attribute.integer_value;
-    case 'float':
-        return attribute.float_value;
-    case 'boolean':
-        return attribute.boolean_value;
-    default:
-        throw new Error('Unexpected attribute type');
-    }
+    attributes: { [key: string]: Attribute };
 }
 
 export async function getProduct(
     database: DatabaseManager,
     gtin: string,
 ): Promise<Product | undefined> {
-    const databaseProduct: DatabaseProduct = (
-        await database.query<DatabaseProduct>('SELECT * FROM product WHERE gtin = $1', [gtin])
-    )[0];
+    const databaseProduct = await database.queryFirst<any>(
+        'SELECT * FROM product WHERE gtin = $1',
+        [gtin],
+    );
 
     if (databaseProduct === undefined) {
         return undefined;
     }
 
-    const attributes: DatabaseProductAttribute[] = await database.query<DatabaseProductAttribute>(
+    const databaseAttributes: any[] = await database.query<any>(
         'SELECT * FROM product_attributes WHERE gtin = $1;',
         [gtin],
     );
 
-    const product: Product = { ...databaseProduct };
+    const product = Transformer.transform<Product>(
+        databaseProduct,
+        Transformer.TRANSFORMATIONS.DB_PRODUCT,
+        Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
+    );
+
+    const attributes = Transformer.transformArray<Attribute>(
+        databaseAttributes,
+        Transformer.TRANSFORMATIONS.DB_ATTRIBUTE,
+        Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
+    );
 
     product.quantity = await getQuantityById(database, databaseProduct.quantity_id);
 
-    product.attributes = {};
-
-    attributes.forEach((attribute) => {
-        product.attributes![attribute.name] = getAttributeValue(attribute);
-    });
+    product.attributes = Transformer.transform(
+        attributes,
+        Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+        Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
+    );
 
     return product;
 }
@@ -105,7 +84,7 @@ export async function createProduct(
             product.category,
             product.brand,
             quantityId,
-            product.images ?? [],
+            product.images || [],
         ],
     );
 
