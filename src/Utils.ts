@@ -81,4 +81,19 @@ export default class Utils {
             return convert().describe(unit).abbr;
         }
     }
+
+    static getAttributeValue(attribute: any): string | number | boolean {
+        switch (attribute.type) {
+        case 'text':
+            return attribute.text_value;
+        case 'integer':
+            return attribute.integer_value;
+        case 'float':
+            return attribute.float_value;
+        case 'boolean':
+            return attribute.boolean_value;
+        default:
+            throw new Error('Unexpected attribute type');
+        }
+    }
 }
