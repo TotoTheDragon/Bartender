@@ -1,8 +1,5 @@
 import { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import {
-    checkRequiredCreateFields,
-    createProduct,
-} from '../../../models/v1/Product';
+import { checkRequiredCreateFields, createProduct } from '../../../models/v1/Product';
 
 export default ((instance: FastifyInstance, _opts, done) => {
     instance.get('/', (_req, res) => {
@@ -10,29 +7,23 @@ export default ((instance: FastifyInstance, _opts, done) => {
     });
 
     instance.post('/', async (req, res) => {
-        const product: any = req.body;
+        const data: any = req.body;
         try {
-            checkRequiredCreateFields(product);
+            checkRequiredCreateFields(data);
         } catch (err: any) {
             return res.status(400).send({ status: 400, message: err.message });
         }
 
         try {
-            const dbProduct = await createProduct(
-                instance['db-manager'],
-                product,
-            );
-            return res.status(201).send(dbProduct);
+            const product = await createProduct(instance['db-manager'], data);
+            return res.status(201).send(product);
         } catch (err: any) {
-            // Check if it is a unique_violation, which means it already exists
-            if (err.code === '23505') {
-                return res
-                    .status(409)
-                    .send({ status: 409, message: 'Product already exists' });
+            switch (err.code) {
+            case '23505': // unique_violation -> was not able to create because there already exists an entry
+                return res.status(409).send({ status: 409, message: 'Product already exists' });
+            default:
+                return res.status(500).send({ status: 500, message: 'Server error' });
             }
-            return res
-                .status(500)
-                .send({ status: 500, message: 'Server error' });
         }
     });
 
