@@ -7,6 +7,8 @@ import MemoryChecker from './health/checkers/MemoryChecker';
 import ResponseTimeChecker from './health/checkers/ResponseTimeChecker';
 import HealthManager from './health/HealthManager';
 import BartenderRouter from './router';
+import registerDatabaseTransformations from './transform/databaseTransformations';
+import registerUtilityTransformations from './transform/utilityTransformations';
 import Utils from './Utils';
 
 config();
@@ -25,6 +27,9 @@ if (process.env.NODE_ENV !== 'production') {
 /*
     Initialize all required things
 */
+
+registerDatabaseTransformations();
+registerUtilityTransformations();
 
 const healthManager = new HealthManager(logger);
 const databaseManager = new DatabaseManager(logger, {});
