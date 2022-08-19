@@ -60,4 +60,8 @@ export default class DatabaseManager extends HealthDependency {
     public async query<T>(query: string, args?: any[]): Promise<T[]> {
         return (await this.client.query<T>(query, args)).rows;
     }
+
+    public async queryFirst<T>(query: string, args?: any[]): Promise<T> {
+        return (await this.client.query<T>(query, args)).rows[0];
+    }
 }
