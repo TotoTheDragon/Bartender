@@ -31,7 +31,7 @@ export async function getQuantity(
 ): Promise<CachedQuantity> {
     const quantity = Transformer.transform<ProductQuantity>(
         unsanitedQuantity,
-        Transformer.TRANSFORMATIONS.UNSANITED_QUANTITY,
+        Transformer.TRANSFORMATIONS.UNSANITIZED_QUANTITY,
         Transformer.TRANSFORMATIONS.INTERNAL_QUANTITY,
     );
 

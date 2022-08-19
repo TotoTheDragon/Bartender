@@ -43,7 +43,7 @@ export default function registerDatabaseTransformations() {
     );
 
     Transformer.registerTransformer(
-        Transformer.TRANSFORMATIONS.UNSANITED_QUANTITY,
+        Transformer.TRANSFORMATIONS.UNSANITIZED_QUANTITY,
         Transformer.TRANSFORMATIONS.INTERNAL_QUANTITY,
         (o) => {
             const quantity: ProductQuantity = {
@@ -54,7 +54,7 @@ export default function registerDatabaseTransformations() {
             };
             quantity.unit = Utils.getSmallestMatchingUnit(o.unit);
             quantity.value = convert(o.value).from(o.unit).to(quantity.unit);
-            quantity.amount = o.quantity_amount;
+            quantity.amount = o.amount;
             quantity.total = quantity.amount * quantity.value;
             return quantity;
         },

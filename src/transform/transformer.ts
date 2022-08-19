@@ -4,7 +4,7 @@ export default class Transformer {
         INTERNAL_PRODUCT: 'internal-product',
         DB_QUANTITY: 'database-quantity',
         INTERNAL_QUANTITY: 'internal-quantity',
-        UNSANITED_QUANTITY: 'unsanited-quantity',
+        UNSANITIZED_QUANTITY: 'unsanitized-quantity',
         DB_ATTRIBUTE: 'database-attribute',
         INTERNAL_ATTRIBUTE: 'internal-attribute',
         ARRAY_KEY_NAME: 'array-key-name',
@@ -14,7 +14,7 @@ export default class Transformer {
     static transformationMap: Map<string, Map<string, (o: any) => any>> = new Map();
 
     static transform<T>(object: any, from: string, to: string): T {
-        if (!this.transformationMap.has(from) || this.transformationMap.get(from)!.has(to)) {
+        if (!this.transformationMap.has(from) || !this.transformationMap.get(from)!.has(to)) {
             throw new Error(
                 `Tried to transform from: ${from}, to: ${to}, but have no transformations available`,
             );
