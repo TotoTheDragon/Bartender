@@ -46,7 +46,7 @@ export const PRODUCT_SCHEMA: Schema = {
         brand: { type: 'string' },
         quantity: QUANTITY_SCHEMA,
     },
-    required: ['gtin'],
+    required: ['gtin', 'name', 'description', 'category', 'brand', 'quantity'],
 };
 
 export async function getProduct(
