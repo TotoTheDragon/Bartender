@@ -7,6 +7,7 @@ const quantityCache: Map<string, CachedQuantity> = new Map();
 const quantityIdCache: Map<number, CachedQuantity> = new Map();
 
 export interface ProductQuantity {
+    id: number;
     value: number;
     unit: Unit;
     amount: number;
