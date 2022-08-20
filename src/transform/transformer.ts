@@ -2,11 +2,13 @@ export default class Transformer {
     static TRANSFORMATIONS = {
         DB_PRODUCT: 'database-product',
         INTERNAL_PRODUCT: 'internal-product',
+        DB_INSERT_PRODUCT: 'database-insert-product',
         DB_QUANTITY: 'database-quantity',
         INTERNAL_QUANTITY: 'internal-quantity',
         UNSANITIZED_QUANTITY: 'unsanitized-quantity',
         DB_ATTRIBUTE: 'database-attribute',
         INTERNAL_ATTRIBUTE: 'internal-attribute',
+        DB_INSERT_ATTRIBUTE: 'database-insert-attribute',
         ARRAY_KEY_NAME: 'array-key-name',
         OBJECT_KEY_NAME: 'object-key-name',
     };
