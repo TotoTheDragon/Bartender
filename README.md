@@ -10,7 +10,7 @@ Product database with API
 
 :x: [PATCH /product/{gtin}](api.md/#update-product)
 
-:x: [DELETE /product/{gtin}](api.md/#delete-product)
+:white_check_mark: [DELETE /product/{gtin}](api.md/#delete-product)
 
 :x: [POST /product/search](api.md/#search-for-product)
 

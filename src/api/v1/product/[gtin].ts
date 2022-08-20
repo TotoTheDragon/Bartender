@@ -1,12 +1,14 @@
 import { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import { getProduct } from '../../../models/v1/Product';
+import { deleteProduct, getProduct } from '../../../models/v1/Product';
 
 export default ((instance: FastifyInstance, _opts, done) => {
     instance.get('/', async (req, res) => {
-        const product = await getProduct(
-            instance['db-manager'],
-            (req.params as any).gtin,
-        );
+        const product = await getProduct(instance['db-manager'], (req.params as any).gtin);
+        res.status(200).send(product);
+    });
+
+    instance.delete('/', async (req, res) => {
+        const product = await deleteProduct(instance['db-manager'], (req.params as any).gtin);
         res.status(200).send(product);
     });
 

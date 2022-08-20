@@ -157,3 +157,8 @@ export async function getProducts(database: DatabaseQuerier) {
 
     return product;
 }
+
+export async function deleteProduct(database: DatabaseQuerier, gtin: string): Promise<void> {
+    await database.queryFirst<any>('DELETE FROM product_attributes WHERE gtin = $1', [gtin]);
+    await database.queryFirst<any>('DELETE FROM product WHERE gtin = $1', [gtin]);
+}
