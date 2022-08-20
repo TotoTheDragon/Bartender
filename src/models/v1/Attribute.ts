@@ -1,5 +1,6 @@
 export interface Attribute {
-    name: string,
-    type: 'text' | 'integer' | 'float' | 'boolean',
-    value: string | number | boolean
+    gtin: string;
+    name: string;
+    type: 'text' | 'integer' | 'float' | 'boolean';
+    value: string | number | boolean;
 }
