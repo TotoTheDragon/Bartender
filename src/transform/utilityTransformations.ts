@@ -12,4 +12,16 @@ export default function registerUtilityTransformations() {
             return obj;
         },
     );
+
+    Transformer.registerTransformer(
+        Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
+        Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+        (o: { [key: string]: any }) => {
+            const arr: any[] = [];
+            Object.keys(o).forEach((key) => {
+                arr.push(o[key]);
+            });
+            return arr;
+        },
+    );
 }
