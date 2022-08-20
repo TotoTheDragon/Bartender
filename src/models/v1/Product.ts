@@ -53,7 +53,7 @@ export async function getProduct(
     database: DatabaseQuerier,
     gtin: string,
 ): Promise<Product | undefined> {
-    const test = await database.queryFirst<any>(
+    const result = await database.queryFirst<any>(
         `
         SELECT product.*,
             row_to_json(quantity) as quantity,
@@ -68,7 +68,7 @@ export async function getProduct(
     );
 
     const product = Transformer.transform<Product>(
-        test,
+        result,
         Transformer.TRANSFORMATIONS.DB_PRODUCT,
         Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
     );
