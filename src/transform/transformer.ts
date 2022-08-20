@@ -26,7 +26,7 @@ export default class Transformer {
     }
 
     static transformArray<T>(object: any[], from: string, to: string): T[] {
-        if (!this.transformationMap.has(from) || this.transformationMap.get(from)!.has(to)) {
+        if (!this.transformationMap.has(from) || !this.transformationMap.get(from)!.has(to)) {
             throw new Error(
                 `Tried to transform from: ${from}, to: ${to}, but have no transformations available`,
             );
@@ -34,7 +34,10 @@ export default class Transformer {
 
         const transformer = this.transformationMap.get(from)!.get(to)!;
 
-        return object.map((i) => transformer(i));
+        return object
+            .filter((i) => i !== null)
+            .filter((i) => i !== undefined)
+            .map((i) => transformer(i));
     }
 
     static registerTransformer(from: string, to: string, transformer: (_o: any) => any) {
