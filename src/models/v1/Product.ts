@@ -1,11 +1,16 @@
 import { Schema } from 'ajv';
+import format from 'pg-format';
 import DatabaseManager from '../../database/DatabaseManager';
 import { DatabaseQuerier } from '../../database/DatabaseQuerier';
-import DatabaseTransaction from '../../database/DatabaseTransaction';
 import Transformer from '../../transform/transformer';
 import { Attribute } from './Attribute';
 import { BartenderImage } from './BartenderImage';
-import { getCachedQuantity, ProductQuantity, QUANTITY_SCHEMA } from './ProductQuantity';
+import {
+    getCachedQuantity,
+    getQuantity,
+    ProductQuantity,
+    QUANTITY_SCHEMA,
+} from './ProductQuantity';
 
 export interface Product {
     gtin?: string;
@@ -73,33 +78,88 @@ export async function getProduct(
 
 export async function createProduct(
     database: DatabaseQuerier,
-    product: RequiredProductData,
+    productData: RequiredProductData,
 ): Promise<Product> {
-    const quantityId = getCachedQuantity(product.quantity)?.id;
+    const transaction =
+        database instanceof DatabaseManager ? await database.createTransaction() : database;
+    try {
+        // Get quantity and create it if it does not exist yet
+        const quantityId =
+            getCachedQuantity(productData.quantity)?.id ||
+            (await getQuantity(transaction, productData.quantity)).id;
 
-    const result = await database.query(
-        'INSERT INTO product (gtin, "name", "description", "category", "brand", "quantity_id", "images") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING 1;',
-        [
-            product.gtin,
-            product.name,
-            product.description,
-            product.category,
-            product.brand,
-            quantityId,
-            product.images || [],
-        ],
-    );
+        const insertProduct = { ...productData };
 
-    const result2 = await database.query(
-        'INSERT INTO product_attributes (gtin, type, text_value) VALUES ($1, $2, $3) RETURNING 1;',
-        [product.gtin, 'text', 'attribute'],
-    );
+        // Make sure that stuff is synced properly
+        insertProduct.quantity.id = quantityId;
+        Object.keys(insertProduct.attributes).forEach((name) => {
+            insertProduct.attributes[name].name = name;
+            insertProduct.attributes[name].gtin = insertProduct.gtin;
+        });
 
-    if (result.length === 0) {
-        throw new Error('Was not able to create product');
+        console.log(
+            format(
+                'INSERT INTO product ("gtin", "name", "description", "category", "brand", "quantity_id", "images") VALUES %L RETURNING 1;',
+                Transformer.transform(
+                    insertProduct,
+                    Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
+                    Transformer.TRANSFORMATIONS.DB_INSERT_PRODUCT,
+                ),
+            ),
+        );
+
+        await transaction.query(
+            format(
+                'INSERT INTO product ("gtin", "name", "description", "category", "brand", "quantity_id", "images") VALUES (%L) RETURNING 1;',
+                Transformer.transform(
+                    insertProduct,
+                    Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
+                    Transformer.TRANSFORMATIONS.DB_INSERT_PRODUCT,
+                ),
+            ),
+        );
+
+        console.log(
+            format(
+                'INSERT INTO product_attributes (gtin, name, type, text_value, integer_value, float_value, boolean_value) VALUES %L;',
+                Transformer.transformArray<any>(
+                    Transformer.transform<any[]>(
+                        insertProduct.attributes,
+                        Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
+                        Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+                    ),
+                    Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
+                    Transformer.TRANSFORMATIONS.DB_INSERT_ATTRIBUTE,
+                ),
+            ),
+        );
+
+        await transaction.query(
+            format(
+                'INSERT INTO product_attributes (gtin, name, type, text_value, integer_value, float_value, boolean_value) VALUES %L;',
+                Transformer.transformArray<any>(
+                    Transformer.transform<any[]>(
+                        insertProduct.attributes,
+                        Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
+                        Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+                    ),
+                    Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
+                    Transformer.TRANSFORMATIONS.DB_INSERT_ATTRIBUTE,
+                ),
+            ),
+        );
+
+        const product = await getProduct(transaction, insertProduct.gtin);
+
+        if (product === undefined) {
+            throw new Error('Did not properly create product');
+        }
+        await transaction.commit();
+        return product;
+    } catch (e) {
+        await transaction.rollback();
+        throw e;
     }
-
-    return { ...product, images: product.images ?? [] };
 }
 
 export async function getProducts(database: DatabaseQuerier) {
