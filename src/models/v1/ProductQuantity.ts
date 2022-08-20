@@ -1,6 +1,6 @@
 import { Schema } from 'ajv';
 import convert, { Unit } from 'convert-units';
-import DatabaseManager from '../../database/DatabaseManager';
+import { DatabaseQuerier } from '../../database/DatabaseQuerier';
 import Transformer from '../../transform/transformer';
 
 const quantityCache: Map<string, CachedQuantity> = new Map();
@@ -36,12 +36,30 @@ function addToCache(quantity: CachedQuantity): CachedQuantity {
     return quantity;
 }
 
+export function getCachedQuantity(
+    unsanitizedQuantity: ProductQuantity,
+): CachedQuantity | undefined {
+    const quantity = Transformer.transform<ProductQuantity>(
+        unsanitizedQuantity,
+        Transformer.TRANSFORMATIONS.UNSANITIZED_QUANTITY,
+        Transformer.TRANSFORMATIONS.INTERNAL_QUANTITY,
+    );
+
+    const hashedQuantity = hashQuantity(quantity);
+
+    return quantityCache.get(hashedQuantity);
+}
+
+export function getCachedQuantityById(id: number): CachedQuantity | undefined {
+    return quantityIdCache.get(id);
+}
+
 export async function getQuantity(
-    database: DatabaseManager,
-    unsanitedQuantity: ProductQuantity,
+    database: DatabaseQuerier,
+    unsanitizedQuantity: ProductQuantity,
 ): Promise<CachedQuantity> {
     const quantity = Transformer.transform<ProductQuantity>(
-        unsanitedQuantity,
+        unsanitizedQuantity,
         Transformer.TRANSFORMATIONS.UNSANITIZED_QUANTITY,
         Transformer.TRANSFORMATIONS.INTERNAL_QUANTITY,
     );
@@ -93,7 +111,7 @@ export async function getQuantity(
     throw new Error('Was not able to find or create quantity');
 }
 export async function getQuantityById(
-    database: DatabaseManager,
+    database: DatabaseQuerier,
     id: number,
 ): Promise<CachedQuantity> {
     if (quantityIdCache.has(id)) {

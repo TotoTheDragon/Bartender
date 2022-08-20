@@ -1,9 +1,11 @@
 import { Schema } from 'ajv';
 import DatabaseManager from '../../database/DatabaseManager';
+import { DatabaseQuerier } from '../../database/DatabaseQuerier';
+import DatabaseTransaction from '../../database/DatabaseTransaction';
 import Transformer from '../../transform/transformer';
 import { Attribute } from './Attribute';
 import { BartenderImage } from './BartenderImage';
-import { getQuantity, ProductQuantity, QUANTITY_SCHEMA } from './ProductQuantity';
+import { getCachedQuantity, ProductQuantity, QUANTITY_SCHEMA } from './ProductQuantity';
 
 export interface Product {
     gtin?: string;
@@ -43,7 +45,7 @@ export const PRODUCT_SCHEMA: Schema = {
 };
 
 export async function getProduct(
-    database: DatabaseManager,
+    database: DatabaseQuerier,
     gtin: string,
 ): Promise<Product | undefined> {
     const test = await database.queryFirst<any>(
@@ -70,10 +72,11 @@ export async function getProduct(
 }
 
 export async function createProduct(
-    database: DatabaseManager,
+    database: DatabaseQuerier,
     product: RequiredProductData,
 ): Promise<Product> {
-    const quantityId = (await getQuantity(database, product.quantity)).id;
+    const quantityId = getCachedQuantity(product.quantity)?.id;
+
     const result = await database.query(
         'INSERT INTO product (gtin, "name", "description", "category", "brand", "quantity_id", "images") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING 1;',
         [
@@ -96,12 +99,10 @@ export async function createProduct(
         throw new Error('Was not able to create product');
     }
 
-    console.log(result2);
-
     return { ...product, images: product.images ?? [] };
 }
 
-export async function getProducts(database: DatabaseManager) {
+export async function getProducts(database: DatabaseQuerier) {
     const test: any[] = await database.query<any>(
         `
         SELECT product.*,
