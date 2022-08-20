@@ -10,6 +10,11 @@ export default function registerDatabaseTransformations() {
         Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
         (o) => {
             const product: Product = {};
+            const attributes = Transformer.transformArray(
+                o.attributes || [],
+                Transformer.TRANSFORMATIONS.DB_ATTRIBUTE,
+                Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
+            );
             product.gtin = o.gtin;
             product.name = o.name;
             product.description = o.description;
@@ -17,7 +22,16 @@ export default function registerDatabaseTransformations() {
             product.category = o.category;
             product.images = o.images || [];
             product.attributes = {};
-            product.quantity = undefined;
+            product.quantity = Transformer.transform(
+                o.quantity,
+                Transformer.TRANSFORMATIONS.DB_QUANTITY,
+                Transformer.TRANSFORMATIONS.INTERNAL_QUANTITY,
+            );
+            product.attributes = Transformer.transform(
+                attributes,
+                Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+                Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
+            );
             return product;
         },
     );

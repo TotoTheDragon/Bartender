@@ -1,9 +1,15 @@
 import { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import { createProduct, PRODUCT_SCHEMA, RequiredProductData } from '../../../models/v1/Product';
+import {
+    createProduct,
+    getProducts,
+    PRODUCT_SCHEMA,
+    RequiredProductData,
+} from '../../../models/v1/Product';
 
 export default ((instance: FastifyInstance, _opts, done) => {
-    instance.get('/', (_req, res) => {
-        res.status(200).send();
+    instance.get('/', async (_req, res) => {
+        const products = await getProducts(instance['db-manager']);
+        res.status(200).send(products);
     });
 
     instance.post('/', async (req, res) => {
