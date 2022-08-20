@@ -97,17 +97,6 @@ export async function createProduct(
             insertProduct.attributes[name].gtin = insertProduct.gtin;
         });
 
-        console.log(
-            format(
-                'INSERT INTO product ("gtin", "name", "description", "category", "brand", "quantity_id", "images") VALUES %L RETURNING 1;',
-                Transformer.transform(
-                    insertProduct,
-                    Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
-                    Transformer.TRANSFORMATIONS.DB_INSERT_PRODUCT,
-                ),
-            ),
-        );
-
         await transaction.query(
             format(
                 'INSERT INTO product ("gtin", "name", "description", "category", "brand", "quantity_id", "images") VALUES (%L) RETURNING 1;',
@@ -115,21 +104,6 @@ export async function createProduct(
                     insertProduct,
                     Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
                     Transformer.TRANSFORMATIONS.DB_INSERT_PRODUCT,
-                ),
-            ),
-        );
-
-        console.log(
-            format(
-                'INSERT INTO product_attributes (gtin, name, type, text_value, integer_value, float_value, boolean_value) VALUES %L;',
-                Transformer.transformArray<any>(
-                    Transformer.transform<any[]>(
-                        insertProduct.attributes,
-                        Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
-                        Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
-                    ),
-                    Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
-                    Transformer.TRANSFORMATIONS.DB_INSERT_ATTRIBUTE,
                 ),
             ),
         );

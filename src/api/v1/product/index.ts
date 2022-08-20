@@ -33,7 +33,6 @@ export default ((instance: FastifyInstance, _opts, done) => {
             case '23505': // unique_violation -> was not able to create because there already exists an entry
                 return res.status(409).send({ status: 409, message: 'Product already exists' });
             default: {
-                console.error(err);
                 return res.status(500).send({ status: 500, message: 'Server error' });
             }
             }
