@@ -96,4 +96,19 @@ export default class Utils {
             throw new Error('Unexpected attribute type');
         }
     }
+
+    static getAttributeValuePath(attribute: any): string | number | boolean {
+        switch (attribute.type) {
+        case 'text':
+            return 'text_value';
+        case 'integer':
+            return 'integer_value';
+        case 'float':
+            return 'float_value';
+        case 'boolean':
+            return 'boolean_value';
+        default:
+            throw new Error('Unexpected attribute type');
+        }
+    }
 }
