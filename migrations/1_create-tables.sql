@@ -26,13 +26,12 @@ CREATE TYPE attribute_type AS ENUM (
 );
 
 CREATE TABLE product_attributes (
-	gtin char(14) PRIMARY KEY REFERENCES product,
+	gtin char(14) REFERENCES product,
 	name varchar,
 	type attribute_type,
 	text_value varchar,
 	integer_value int,
 	float_value float,
-	boolean_value boolean
+	boolean_value boolean,
+    PRIMARY KEY(gtin, name)
 );
-
-CREATE UNIQUE INDEX ON product_attributes (name);
