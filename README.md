@@ -8,7 +8,7 @@ Product database with API
 
 :white_check_mark: [GET /product/{gtin}](api.md/#find-product-by-gtin)
 
-:x: [PATCH /product/{gtin}](api.md/#update-product)
+:white_check_mark: [PATCH /product/{gtin}](api.md/#update-product)
 
 :white_check_mark: [DELETE /product/{gtin}](api.md/#delete-product)
 
