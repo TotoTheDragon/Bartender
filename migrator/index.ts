@@ -21,11 +21,15 @@ async function migrate() {
 
     for (const filePath of filePaths) {
         console.log(`Starting migration: ${basename(filePath, '.sql')}`);
-        const query: string = (await readFile(filePath)).toString();
-        try {
-            await client.query(query);
-        } catch (err: any) {
-            console.error('error: ', err.message);
+        const queryString: string = (await readFile(filePath)).toString();
+        const queries: string[] = queryString.split(';');
+        for (const query of queries) {
+            try {
+                await client.query(query);
+            } catch (err: any) {
+                console.error('error:', err.message, 'query:', query);
+                break;
+            }
         }
         console.log(`Finished migration: ${basename(filePath, '.sql')}`);
     }
@@ -41,10 +45,7 @@ async function findSQLFiles(path: string): Promise<string[]> {
     return readdirDeep(path);
 }
 
-async function readdirDeep(
-    path: string,
-    appendPath: boolean = true,
-): Promise<string[]> {
+async function readdirDeep(path: string, appendPath: boolean = true): Promise<string[]> {
     const files: string[] = [];
     const dir = await opendir(path);
     for await (const dirent of dir) {
