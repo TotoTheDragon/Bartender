@@ -31,12 +31,7 @@ export default class HealthManager {
         dependency.init(this);
         setInterval(() => {
             const healthy = dependency.isHealthy();
-            if (
-                !healthy &&
-                (name in this.dependencyCache
-                    ? this.dependencyCache[name]
-                    : true)
-            ) {
+            if (!healthy && (name in this.dependencyCache ? this.dependencyCache[name] : true)) {
                 this.logger.warn('Found unhealthy dependency', {
                     name,
                     status: dependency.getStatus(),
@@ -46,9 +41,7 @@ export default class HealthManager {
                 }
             } else if (
                 healthy &&
-                (name in this.dependencyCache
-                    ? !this.dependencyCache[name]
-                    : false)
+                (name in this.dependencyCache ? !this.dependencyCache[name] : false)
             ) {
                 this.logger.warn('Found recovered dependency', {
                     name,
@@ -59,6 +52,7 @@ export default class HealthManager {
                 }
             }
         }, 1000);
+        this.logger.info('Registered dependency', { name });
     }
 
     public registerChecker(checker: HealthChecker, interval: number = 30000) {
@@ -71,9 +65,7 @@ export default class HealthManager {
             const healthy = checker.lastCheck?.healthy;
             if (
                 !healthy &&
-                (checker.name in this.checkerCache
-                    ? this.checkerCache[checker.name]
-                    : true)
+                (checker.name in this.checkerCache ? this.checkerCache[checker.name] : true)
             ) {
                 this.logger.warn('Found unhealthy component', {
                     name: checker.name,
@@ -84,9 +76,7 @@ export default class HealthManager {
                 }
             } else if (
                 healthy &&
-                (checker.name in this.checkerCache
-                    ? !this.checkerCache[checker.name]
-                    : false)
+                (checker.name in this.checkerCache ? !this.checkerCache[checker.name] : false)
             ) {
                 this.logger.warn('Found recovered component', {
                     name: checker.name,
@@ -97,6 +87,7 @@ export default class HealthManager {
                 }
             }
         }, 1000);
+        this.logger.info('Registered healthchecker', { name: checker.name });
     }
 
     public isHealthy(): boolean {
@@ -110,14 +101,8 @@ export default class HealthManager {
     public getHealth(): Health {
         return {
             healthy: this.isHealthy(),
-            dependencies: Utils.mapObjectValue(
-                this.dependencies,
-                (dependency) => dependency.getStatus(),
-            ),
-            checks: Utils.mapObjectValue(
-                this.checkers,
-                (checker) => checker.lastCheck,
-            ),
+            dependencies: Utils.mapObjectValue(this.dependencies, (dependency) => dependency.getStatus()),
+            checks: Utils.mapObjectValue(this.checkers, (checker) => checker.lastCheck),
         };
     }
 }
