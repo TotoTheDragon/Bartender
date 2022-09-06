@@ -12,7 +12,7 @@ Product database with API
 
 :white_check_mark: [DELETE /product/{gtin}](api.md/#delete-product)
 
-:x: [POST /product/search](api.md/#search-for-product)
+:white_check_mark: [POST /product/search](api.md/#search-for-product)
 
 :white_check_mark: [GET /product](api.md/#get-all-products)
 
