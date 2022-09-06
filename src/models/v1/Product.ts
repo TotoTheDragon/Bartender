@@ -93,10 +93,14 @@ export async function createProduct(
 
         // Make sure that stuff is synced properly
         insertProduct.quantity.id = quantityId;
-        Object.keys(insertProduct.attributes).forEach((name) => {
-            insertProduct.attributes[name].name = name;
-            insertProduct.attributes[name].gtin = insertProduct.gtin;
-        });
+        if (insertProduct.attributes) {
+            Object.keys(insertProduct.attributes).forEach((name) => {
+                insertProduct.attributes[name].name = name;
+                insertProduct.attributes[name].gtin = insertProduct.gtin;
+            });
+        } else {
+            insertProduct.attributes = {};
+        }
 
         await transaction.query(
             format(
@@ -108,21 +112,22 @@ export async function createProduct(
                 ),
             ),
         );
-
-        await transaction.query(
-            format(
-                'INSERT INTO product_attributes (gtin, name, type, text_value, integer_value, float_value, boolean_value) VALUES %L;',
-                Transformer.transformArray<any>(
-                    Transformer.transform<any[]>(
-                        insertProduct.attributes,
-                        Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
-                        Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+        if (Object.keys(insertProduct.attributes).length > 0) {
+            await transaction.query(
+                format(
+                    'INSERT INTO product_attributes (gtin, name, type, text_value, integer_value, float_value, boolean_value) VALUES %L;',
+                    Transformer.transformArray<any>(
+                        Transformer.transform<any[]>(
+                            insertProduct.attributes,
+                            Transformer.TRANSFORMATIONS.OBJECT_KEY_NAME,
+                            Transformer.TRANSFORMATIONS.ARRAY_KEY_NAME,
+                        ),
+                        Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
+                        Transformer.TRANSFORMATIONS.DB_INSERT_ATTRIBUTE,
                     ),
-                    Transformer.TRANSFORMATIONS.INTERNAL_ATTRIBUTE,
-                    Transformer.TRANSFORMATIONS.DB_INSERT_ATTRIBUTE,
                 ),
-            ),
-        );
+            );
+        }
 
         const product = await getProduct(transaction, insertProduct.gtin);
 
