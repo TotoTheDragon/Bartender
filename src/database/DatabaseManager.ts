@@ -45,14 +45,17 @@ export default class DatabaseManager extends HealthDependency {
     }
 
     async init(): Promise<void> {
-        setInterval(() => {
-            try {
-                this.ping();
-            } catch {
-                this.latency = -1;
-            }
-        }, 10000);
-        this.ping();
+        // Wait 200ms before starting pinging to give the system some time to start
+        setTimeout(() => {
+            setInterval(() => {
+                try {
+                    this.ping();
+                } catch {
+                    this.latency = -1;
+                }
+            }, 10000);
+            this.ping();
+        }, 200);
     }
 
     public async query<T>(query: string, args?: any[]): Promise<T[]> {

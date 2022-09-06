@@ -63,15 +63,16 @@ server.addHook('onResponse', (_request, reply, next) => {
     next();
 });
 
+// Set up connections
+(async () => {
+    databaseManager.connect();
+})();
+
 // Set up health manager
 healthManager.registerDependency('Postgres Database', databaseManager);
 
 healthManager.registerChecker(memoryChecker);
 healthManager.registerChecker(responseTimeChecker, 5000);
-// Set up connections
-(async () => {
-    databaseManager.connect();
-})();
 
 (async () => {
     const address = await server.listen({ port: 3000 });
