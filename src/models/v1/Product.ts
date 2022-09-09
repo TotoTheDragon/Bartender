@@ -235,3 +235,39 @@ export async function patchProduct(
         throw e;
     }
 }
+
+export async function searchProduct(
+    database: DatabaseManager,
+    productData: Product,
+): Promise<Product[]> {
+    if (typeof productData.gtin === 'string') {
+        const product = await getProduct(database, productData.gtin);
+        if (product !== undefined) {
+            return [product];
+        }
+    } else {
+        // TODO also search by things other than name, like brand, category and quantity
+        const productsData = await database.query(
+            `
+            SELECT product.*,
+                row_to_json(quantity) as quantity,
+                json_agg(product_attributes) as attributes,
+                word_similarity(product_search.search, $1)
+            FROM product_search
+            JOIN product ON product.gtin = product_search.gtin
+            JOIN quantity ON quantity.id = product.quantity_id
+            LEFT JOIN product_attributes ON product_attributes.gtin = product.gtin
+            GROUP BY product_search.search, product.gtin, quantity.*
+            ORDER BY word_similarity(product_search.search, $1) DESC LIMIT 10;
+            `,
+            [productData.name as string],
+        );
+        console.log(productsData);
+        return Transformer.transformArray(
+            productsData,
+            Transformer.TRANSFORMATIONS.DB_PRODUCT,
+            Transformer.TRANSFORMATIONS.INTERNAL_PRODUCT,
+        );
+    }
+    return [];
+}
