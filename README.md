@@ -17,3 +17,7 @@ Product database with API
 :white_check_mark: [GET /product](api.md/#get-all-products)
 
 :white_check_mark: [POST /product](api.md/#create-product)
+
+:x: Allow searching by things other than name
+
+:x: Automatically refresh materialized view on updates
